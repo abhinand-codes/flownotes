@@ -7,5 +7,7 @@ Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/me', fn (Request $request) => $request->user());
+    Route::get('/me', fn(Request $request) => $request->user());
+    Route::patch('/notes/{note}/autosave', [\App\Http\Controllers\Api\NoteController::class, 'autosave']);
+    Route::apiResource('notes', \App\Http\Controllers\Api\NoteController::class);
 });

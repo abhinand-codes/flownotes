@@ -53,4 +53,16 @@ class NoteController extends Controller
     {
         abort_unless($note->user_id === auth()->id(), 403);
     }
+    public function autosave(Request $request, Note $note)
+    {
+        $this->authorizeNote($note);
+
+        $data = $request->validate([
+            'content' => 'nullable|string',
+        ]);
+
+        $note->update(['content' => $data['content'] ?? '']);
+
+        return response()->json(['saved_at' => now()]);
+    }
 }
