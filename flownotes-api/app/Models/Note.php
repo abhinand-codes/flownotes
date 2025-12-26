@@ -15,4 +15,14 @@ class Note extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function outgoingLinks()
+    {
+        return $this->belongsToMany(Note::class, 'note_links', 'source_note_id', 'target_note_id');
+    }
+
+    public function incomingLinks()
+    {
+        return $this->belongsToMany(Note::class, 'note_links', 'target_note_id', 'source_note_id');
+    }
 }

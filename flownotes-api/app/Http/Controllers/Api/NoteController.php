@@ -20,7 +20,9 @@ class NoteController extends Controller
             'content' => 'nullable|string',
         ]);
 
-        return $request->user()->notes()->create($data);
+        $note = $request->user()->notes()->create($data);
+        $this->syncWikilinks($note, $data['content'] ?? '');
+        return $note;
     }
 
     public function show(Note $note)
@@ -39,6 +41,9 @@ class NoteController extends Controller
         ]);
 
         $note->update($data);
+        if (isset($data['content'])) {
+            $this->syncWikilinks($note, $data['content']);
+        }
         return $note;
     }
 
@@ -62,7 +67,29 @@ class NoteController extends Controller
         ]);
 
         $note->update(['content' => $data['content'] ?? '']);
+        $this->syncWikilinks($note, $data['content'] ?? '');
 
         return response()->json(['saved_at' => now()]);
+    }
+
+    private function syncWikilinks(Note $note, string $content): void
+    {
+        preg_match_all('/\[\[(.*?)\]\]/', $content, $matches);
+        $titles = array_unique($matches[1]);
+
+        $linkedNoteIds = [];
+        foreach ($titles as $title) {
+            $title = trim($title);
+            if (empty($title))
+                continue;
+
+            $linkedNote = Note::firstOrCreate(
+                ['user_id' => $note->user_id, 'title' => $title],
+                ['content' => '']
+            );
+            $linkedNoteIds[] = $linkedNote->id;
+        }
+
+        $note->outgoingLinks()->sync($linkedNoteIds);
     }
 }
